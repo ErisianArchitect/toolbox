@@ -8,16 +8,12 @@ from collections import (
     defaultdict,
     ChainMap,
 )
-
 from collections.abc import MutableMapping, Mapping
+from include import Includer
 
-__all__ = (
-    'attrdict',
-    'attrdefaultdict',
-    'attrchainmap',
-    'attrmappingproxy'
-)
+__all__ = (include := Includer())
 
+@include
 class attrdict(dict):
     """A dictionary subtype that allows access through attributes.
     """
@@ -25,6 +21,7 @@ class attrdict(dict):
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
 
+@include
 class attrdefaultdict(defaultdict):
     """Similar to attrdict, but allows a factory method.
     """
@@ -32,6 +29,7 @@ class attrdefaultdict(defaultdict):
     __setattr__ = defaultdict.__setitem__
     __delitem__ = defaultdict.__delitem__
 
+@include
 class attrchainmap(ChainMap):
     """A ChainMap subtype that allows access through attributes.
     """
@@ -39,6 +37,7 @@ class attrchainmap(ChainMap):
     __setattr__ = ChainMap.__setitem__
     __delitem__ = ChainMap.__delitem__
 
+@include
 class attrmappingproxy:
     """Similar to AttrDict, but is useful when you already have a mapping.
     """

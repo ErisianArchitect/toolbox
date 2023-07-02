@@ -3,21 +3,13 @@ from functools import partial, wraps
 import inspect
 from inspect import signature, Parameter as param, Signature
 from .fp import first
+from .includer import Includer
 
-__all__ = (
-    'decorator',
-    'attr',
-    'singleton',
-    'evaluate',
-    'lookup',
-    'attrgetter',
-    'alias',
-    'params',
-    'Alias',
-)
+__all__ = (include := Includer())
 
 # TODO: Update the decorator to add a `.replace(value)` function to
 #       the wrapper allowing the decorator to replace the decorated value.
+@include
 def decorator(target):
     """Turns `target` into a decorator.
     
@@ -70,6 +62,7 @@ def decorator(target):
             return inner
         return _wrapped
 
+@include
 class params:
     __slots__ = ('args', 'kwargs')
     @overload
@@ -84,6 +77,7 @@ class params:
     def invoke(self, fn: Callable):
         return fn(*self.args, **self.kwargs)
 
+@include
 class Alias:
     __slots__ = ('target', 'args', 'kwargs')
     @overload
@@ -114,6 +108,7 @@ class Alias:
         return self.target(*(*self.args, *args), **{**self.kwargs, **kwargs})
 
 @decorator
+@include
 def alias(target, *names, **partials):
     """Apply aliases to target.
     
@@ -146,6 +141,7 @@ def alias(target, *names, **partials):
         plocals[k] = Alias(target, v)
 
 @decorator
+@include
 def attr(target, **kwargs):
     """Apply attributes to the decorated object."""
     for k, v in kwargs.items():
@@ -166,12 +162,14 @@ def __new__singleton__(cls, *args, **kwargs):
     return cls.___singleton_instance
 
 @decorator
+@include
 def singleton(cls):
     """When used as a decorator for a class, turns class into a singleton."""
     setattr(cls, '__new__', __new__singleton__)
 
 R = TypeVar("R")
 
+@include
 def evaluate(target: Callable[[], R]) -> R:
     """This decorator is used to replace a function with the value that it returns.
     
@@ -189,6 +187,7 @@ def evaluate(target: Callable[[], R]) -> R:
     """
     return target()
 
+@include
 class lookup:
     """The lookup class can be used to create a getter and optional setter for key lookup.
     
@@ -252,6 +251,7 @@ class lookup:
     def __sub__(self, other):
         return self.getter(other)
 
+@include
 class attrgetter:
     """Allows for the quick creation of a `__getattr__` interface.
 

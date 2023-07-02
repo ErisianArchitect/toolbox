@@ -5,54 +5,21 @@ import typing
 import builtins
 from itertools import islice
 from functools import partial, partialmethod, wraps
+from includer import Includer
 
 # TODO: Write docs
 #       Cleanup code.
 
-__all__ = (
-    'first',
-    'nth',
-    'last',
-    'passalong',
-    'passnth',
-    'returns',
-    'returnTrue',
-    'returnFalse',
-    'returnNone',
-    'ne',
-    'eq',
-    'lt',
-    'le',
-    'gt',
-    'ge',
-    'is_',
-    'is_not',
-    'not_none',
-    'is_none',
-    'present',
-    'absent',
-    'invertdict',
-    'strjoin',
-    'do',
-    'filterfalse',
-    'filternone',
-    'count',
-    'istype',
-    'instanceof',
-    'filtertype',
-    'revrange',
-    'yieldinstead',
-    'calltransform',
-    'callstack',
-    'callstackfn',
-)
+__all__ = Includer()
 
+@__all__
 def first(seq: Iterable, filter=None) -> Any | None:
     for value in seq:
         if not callable(filter) or filter(value):
             return value
     return None
 
+@__all__
 def nth(n: int, seq: Iterable) -> Any | None:
     # Try the obvious first.
     try:
@@ -64,6 +31,7 @@ def nth(n: int, seq: Iterable) -> Any | None:
             return value
     return None
 
+@__all__
 def last(seq: Sequence) -> Any | None:
     try:
         return seq[-1]
@@ -73,6 +41,7 @@ def last(seq: Sequence) -> Any | None:
         for result in seq: pass
         return result
 
+@__all__
 def passalong(value):
     """Returns the value that was passed to it.
     
@@ -80,6 +49,7 @@ def passalong(value):
     """
     return value
 
+@__all__
 def passnth(key: int | str = 0, default: Optional[Any] = None):
     match key:
         case int(index):
@@ -93,55 +63,70 @@ def passnth(key: int | str = 0, default: Optional[Any] = None):
         case _:
             raise TypeError(key)
 
+@__all__
 def returns(*values)->Callable[..., Any]:
     def returns(*args, **kwargs):
         return values
     return returns
 
+@__all__
 def returnTrue(*args, **kwargs): return True
 
+@__all__
 def returnFalse(*args, **kwargs): return False
 
+@__all__
 def returnNone(*args, **kwargs): return None
 
+@__all__
 def ne(value):
     """Creates a function that checks if value is not equal to parameter."""
     return partial(operator.ne, value)
 
+@__all__
 def eq(value):
     """Creates a function that checks if value is equal to parameter."""
     return partial(operator.eq, value)
 
+@__all__
 def lt(value):
     """Creates a function that checks if value is less than parameter."""
     return partial(operator.lt, value)
 
+@__all__
 def le(value):
     """Creates a function that checks if value is less than or equal to parameter."""
     return partial(operator.le, value)
 
+@__all__
 def gt(value):
     """Creates a function that checks if value is greater than parameter."""
     return partial(operator.gt, value)
 
+@__all__
 def ge(value):
     """Creates a function that checks if value is greater than or equal to parameter."""
     return partial(operator.ge, value)
 
+@__all__
 def is_(value):
     """Creates a function that checks if value is parameter."""
     return partial(operator.is_, value)
 
+@__all__
 def is_not(value):
     """Creates a function that checks if value is not parameter."""
     return partial(operator.is_not, value)
 
+@__all__
 def not_none(value):
     return value is not None
 
+@__all__
 def is_none(value):
     return value is None
 
+@__all__
 class present:
     """Creates a function that checks if a value is present in collection."""
     __slots__ = ('collection',)
@@ -152,6 +137,7 @@ class present:
     def __call__(self, value)->bool:
         return value in self.collection
 
+@__all__
 class absent:
     """Creates a function that checks if a value is absent from collection."""
     __slots__ = ('collection',)
@@ -162,6 +148,7 @@ class absent:
     def __call__(self, value)->bool:
         return value not in self.collection
 
+@__all__
 def invertdict(d : dict)->dict:
     """Returns a version of the passed dictionary that has the keys and values swapped."""
     return {v : k for k, v in d.items()}
@@ -170,18 +157,22 @@ def invertdict(d : dict)->dict:
 def strjoin(seq: Sequence[str])->str:...
 @overload
 def strjoin(seq: Sequence[str], joiner: str = '')->str:...
+@__all__
 def strjoin(seq: Sequence[str], joiner: str = '')->str:
     return joiner.join(seq)
 
+@__all__
 def do(action: Callable, seq: Iterable):
     """Do `action(item)` for every `item` in `seq`."""
     for item in seq:
         action(item)
 
+@__all__
 def filterfalse(seq: Iterable):
     """Filter elements that evaluate to True. Remove all elements that evaluate to False."""
     yield from filter(bool, seq)
 
+@__all__
 def filternone(seq: Iterable):
     """Filter out elements that are None."""
     yield from filter(not_none, seq)
@@ -190,6 +181,7 @@ def filternone(seq: Iterable):
 def count(seq: Iterable)->int:...
 @overload
 def count(seq: Iterable, filter: Callable)->int:...
+@__all__
 def count(seq: Iterable, filter=None)->int:
     if callable(filter):
         return sum((1 for _ in builtins.filter(filter, seq)))
@@ -199,16 +191,19 @@ def count(seq: Iterable, filter=None)->int:
         else:
             return sum((1 for _ in seq))
 
+@__all__
 def istype(type: Type):
     def istype(value)->bool:
         return builtins.type(value) == type
     return istype
 
+@__all__
 def instanceof(type: Type):
     def instanceof(value)->bool:
         return isinstance(value, type)
     return instanceof
 
+@__all__
 def filtertype(_type: Type, seq: Iterable, subtypes: bool = False):
     pass
 
@@ -218,12 +213,15 @@ def revrange(end: SupportsIndex,/)->range:...
 def revrange(start: SupportsIndex, end: SupportsIndex,/)->range:...
 @overload
 def revrange(start: SupportsIndex, end: SupportsIndex, step: SupportsIndex,/)->range:...
+@__all__
 def revrange(start: SupportsIndex, end: SupportsIndex = ..., step: SupportsIndex = ...)->range:
     pass
 
+@__all__
 def yieldinstead(iterable: Iterable[Any], value: Any = None):
     yield from (value for _ in iterable)
 
+@__all__
 def calltransform(callback: Callable[..., Any], transformer: Callable[..., Tuple[Tuple[Any], Dict[str, Any]]])->Callable[..., Any]:
     """Creates a function that transforms the arguments passed to it before calling the provided callback."""
     @wraps(callback)
@@ -236,7 +234,25 @@ def calltransform(callback: Callable[..., Any], transformer: Callable[..., Tuple
 def callstack(iterable: Iterable[Callable[...,Any]|Any])->Callable[[Any], Any]:...
 @overload
 def callstack(*stack)->Callable[[Any], Any]:...
+@__all__
 def callstack(iterable_or_callable, *stack)->Callable[[Any], Any]:
+    """Calls each function along the callstack with the result of the previous.
+
+    This function is a bit complicated, so it would be easier to read the code, but I'll
+    give a couple examples. First, a simple one, then a complicated one.
+    
+    ```
+    def vec2(x, y):
+        return float(x), float(y)
+    def get_pos():
+        return 3, 14
+    def multiply_vec(x, y):
+        return x*y
+    
+    transformer = callstack(get_pos, vec2, multiply_vec)
+    print(transformer())
+    ```
+    """
     if callable(iterable_or_callable):
         stack = (iterable_or_callable, *stack)
     elif isinstance(iterable_or_callable, Iterable) and not stack:
@@ -267,6 +283,7 @@ def callstack(iterable_or_callable, *stack)->Callable[[Any], Any]:
         return args if args else None
     return callstack
 
+@__all__
 def callstackfn(callback: Callable[..., Any], pass_kwargs: bool = False)->Callable[...,tuple]:
     """Transforms a regular callback into a callstack function.
 
@@ -297,3 +314,10 @@ def callstackfn(callback: Callable[..., Any], pass_kwargs: bool = False)->Callab
         result = callback(*args, **kwargs)
         return (result,) if not pass_kwargs else (result, kwargs)
     return callstackfn
+
+@__all__
+def call_or(maybe_fn, *args, **kwargs):
+    """If maybe_fn is a callable, call it with the given args and return the result, otherwise return maybe_fn."""
+    if callable(maybe_fn):
+        return maybe_fn(*args, **kwargs)
+    return maybe_fn
