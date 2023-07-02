@@ -46,7 +46,7 @@ class Includer(list):
     def __init__(self, targets: Iterable[str | Any]):...
     @overload
     def __init__(self, *targets: Iterable[str | Any]):...
-    def __init__(self, *targets):
+    def __init__(self, *targets, include_globals: bool = False):
         super().__init__()
         if (
             len(targets) == 1 
@@ -54,6 +54,9 @@ class Includer(list):
             and isinstance(targets[0], Iterable)
         ):
             targets = targets[0]
+        if include_globals:
+            for k in globals().keys():
+                self.append(k)
         for target in targets:
             self.append(target)
     
