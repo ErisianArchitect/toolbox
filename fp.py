@@ -1,14 +1,8 @@
-import enum
 import operator
 from typing import *
-import typing
 import builtins
-from itertools import islice
-from functools import partial, partialmethod, wraps
+from functools import partial, wraps
 from includer import Includer
-
-# TODO: Write docs
-#       Cleanup code.
 
 __all__ = Includer()
 
@@ -153,6 +147,44 @@ def invertdict(d : dict)->dict:
     """Returns a version of the passed dictionary that has the keys and values swapped."""
     return {v : k for k, v in d.items()}
 
+@__all__
+def prefixargs(fn: Callable[...,Any], *prefix_args, **prefix_kwargs):
+    """Creates a function that prefixes the supplied arguments
+    to the arguments passed to the callback."""
+    @wraps(fn)
+    def wrapped(*args, **kwargs):
+        return fn(*(*prefix_args, *args), **{**prefix_kwargs, **kwargs})
+    return wrapped
+
+@__all__
+def appendargs(fn: Callable[..., Any], *post_args, **post_kwargs):
+    """Creates function that appends the supplied arguments
+    to the arguments passed to the callback."""
+    @wraps(fn)
+    def wrapped(*args, **kwargs):
+        return fn(*(*args, *post_args), **{**kwargs, **post_kwargs})
+    return wrapped
+
+@__all__
+def callwith(*args, **kwargs):
+    """Creates a function that accepts a function as its argument
+    and calls that function with the supplied args and kwargs."""
+    def callwith(callback):
+        return callback(*args, **kwargs)
+    return callwith
+
+@__all__
+def matchall(*predicates):
+    def matchall(*args, **kwargs)->bool:
+        return all(map(callwith(*args, **kwargs), predicates))
+    return matchall
+
+@__all__
+def matchany(*predicates):
+    def matchany(*args, **kwargs)->bool:
+        return any(map(callwith(*args, **kwargs), predicates))
+    return matchany
+
 @overload
 def strjoin(seq: Sequence[str])->str:...
 @overload
@@ -162,10 +194,27 @@ def strjoin(seq: Sequence[str], joiner: str = '')->str:
     return joiner.join(seq)
 
 @__all__
-def do(action: Callable, seq: Iterable):
+def startswith(start: str, __start: SupportsIndex = None, __end: SupportsIndex = None)->Callable[[str],bool]:
+    # def startswith(s: str)->bool:
+    #     return s.startswith(start, __start, __end)
+    # return startswith
+    return appendargs(str.startswith, start, __start, __end)
+
+@__all__
+def endswith(end: str, __start: SupportsIndex = None, __end: SupportsIndex = None)->Callable[[str], bool]:
+    # def endswith(s: str)->bool:
+    #     return s.endswith(end, __start, __end)
+    # return endswith
+    return appendargs(str.endswith, end, __start, __end)
+
+@__all__
+def do(action: Callable, seq: Iterable, unpack: bool = True):
     """Do `action(item)` for every `item` in `seq`."""
     for item in seq:
-        action(item)
+        if isinstance(item, tuple) and unpack:
+            action(*item)
+        else:
+            action(item)
 
 @__all__
 def filterfalse(seq: Iterable):
