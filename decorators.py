@@ -2,8 +2,8 @@ from typing import *
 from functools import partial, wraps
 import inspect
 from inspect import signature, Parameter as param, Signature
-from .fp import first
-from .includer import Includer
+from .fp import first, replace_decorator
+from .modutil import Includer
 
 __all__ = (include := Includer())
 
@@ -46,6 +46,8 @@ def decorator(target):
     if len(params) == 1 and first(params.values()).kind != param.VAR_KEYWORD:
         @wraps(target)
         def _wrapped(decorator_target):
+            # Call the target function, and if a result is returned, that is the replacement.
+            # If None is returned, no replacement occurs.
             if (result := target(decorator_target)) is not None:
                 return result
             else:
@@ -55,6 +57,8 @@ def decorator(target):
         @wraps(target)
         def _wrapped(*args, **kwargs):
             def inner(decorator_target):
+                # Call the target function, and if a result is returned, that is the replacement.
+                # If None is returned, no replacement occurs.
                 if (result := target(decorator_target, *args, **kwargs)) is not None:
                     return result
                 else:
@@ -265,14 +269,13 @@ class attrgetter:
     'www.example.com/docs/example/'
     ```
     """
-    __slots__ = ('___attrgetter_getter',)
-    ___attrgetter_getter: Callable[[str], Any]
+    getter: Callable[[str], Any]
 
     def __init__(self, getter: Callable | dict):
-        if isinstance(getter, Callable):
-            self.___attrgetter_getter = getter
+        if callable(getter):
+            self.getter = getter
         elif isinstance(getter, dict):
-            self.___attrgetter_getter = getter.get
+            self.getter = getter.__getitem__
     
     def __getattr__(self, name: str)->Any:
-        return self.___attrgetter_getter(name)
+        return self.getter(name)

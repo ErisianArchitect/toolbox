@@ -7,19 +7,40 @@ from typing_extensions import Self
 from collections import (
     defaultdict,
     ChainMap,
+    UserDict,
 )
 from collections.abc import MutableMapping, Mapping
-from include import Includer
+from .modutil import Includer
 
 __all__ = (include := Includer())
 
 @include
 class attrdict(dict):
     """A dictionary subtype that allows access through attributes.
+    ```py
+    >>> letter_fruit = attrdict()
+    >>> letter_fruit.a = 'Apple'
+    >>> letter_fruit.b = 'Banana'
+    >>> letter_fruit.c = 'Cherry'
+    >>> letter_fruit
+    {'a': 'Apple', 'b': 'Banana', 'c': 'Cherry'}
+    >>> del letter_fruit.c
+    >>> letter_fruit.b
+    'Banana'
+    >>> letter_fruit
+    {'a': 'Apple', 'b': 'Banana'}
+    ```
     """
     __getattr__ = dict.__getitem__
     __setattr__ = dict.__setitem__
     __delattr__ = dict.__delitem__
+
+@include
+class attruserdict(UserDict):
+    """A UserDict subtype that allows acces through attributes."""
+    __getattr__ = UserDict.__getitem__
+    __setattr__ = UserDict.__setitem__
+    __delattr__ = UserDict.__delitem__
 
 @include
 class attrdefaultdict(defaultdict):

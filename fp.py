@@ -2,7 +2,7 @@ import operator
 from typing import *
 import builtins
 from functools import partial, wraps
-from includer import Includer
+from .modutil import Includer
 
 __all__ = Includer()
 
@@ -194,6 +194,10 @@ def strjoin(seq: Sequence[str], joiner: str = '')->str:
     return joiner.join(seq)
 
 @__all__
+def surroundedwith(start: str, end: str, __start: SupportsIndex = None, __end: SupportsIndex = None)->Callable[[str],bool]:
+    return matchall(startswith(start, __start, __end), endswith(end, __start, __end))
+
+@__all__
 def startswith(start: str, __start: SupportsIndex = None, __end: SupportsIndex = None)->Callable[[str],bool]:
     # def startswith(s: str)->bool:
     #     return s.startswith(start, __start, __end)
@@ -271,6 +275,27 @@ def yieldinstead(iterable: Iterable[Any], value: Any = None):
     yield from (value for _ in iterable)
 
 @__all__
+def yieldforever(value: Any = None):
+    while True:
+        yield value
+
+@__all__
+def yieldcall(callback: Callable[..., Any], *args, **kwargs):
+    while True:
+        yield callback(*args, **kwargs)
+
+@__all__
+def next_or(it, default: Any = None):
+    try:
+        return next(it)
+    except StopIteration:
+        return default
+
+@__all__
+def repeatforever(callback: Callable[..., Any], *args, **kwargs):
+    for _ in yieldcall(callback, *args, **kwargs):...
+
+@__all__
 def calltransform(callback: Callable[..., Any], transformer: Callable[..., Tuple[Tuple[Any], Dict[str, Any]]])->Callable[..., Any]:
     """Creates a function that transforms the arguments passed to it before calling the provided callback."""
     @wraps(callback)
@@ -306,6 +331,8 @@ def callstack(iterable_or_callable, *stack)->Callable[[Any], Any]:
         stack = (iterable_or_callable, *stack)
     elif isinstance(iterable_or_callable, Iterable) and not stack:
         stack = iterable_or_callable
+    else:
+        raise TypeError("Supplied incorrect values or something, idk.")
     def callstack(*args, **kwargs):
         for mapper in stack:
             match mapper:
@@ -370,3 +397,35 @@ def call_or(maybe_fn, *args, **kwargs):
     if callable(maybe_fn):
         return maybe_fn(*args, **kwargs)
     return maybe_fn
+
+@__all__
+def conditional(predicate: Callable[[],bool], takes_args: bool = False):
+    """Creates a function that is only called if a predicate is met."""
+    def decorator(target):
+        @wraps(target)
+        def conditional(*args, **kwargs):
+            if takes_args:
+                active = predicate(*args, **kwargs)
+            else:
+                active = predicate()
+            if active:
+                return target(*args, **kwargs)
+        return conditional
+    return decorator
+
+@__all__
+def replace_decorator(name_or_obj: str | object, name: str = None):
+    match (name_or_obj, name):
+        case (str(name), None):
+            if not name.isidentifier():
+                raise NameError(f'Name was not a valid identifier: {name!r}')
+            def _wrapped(self, target):
+                setattr(self, name, target)
+            _wrapped.__name__ = name
+            return _wrapped
+        case (object(), str(name)):
+            if not name.isidentifier():
+                raise NameError(f'Name was not a valid identifier: {name!r}')
+            return partial(setattr, name_or_obj, name)
+        case _:
+            raise Exception("TODO!")
