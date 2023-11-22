@@ -36,16 +36,16 @@ from time import sleep
 from datetime import datetime, date, timedelta
 now = datetime.now
 utcnow = datetime.utcnow
-today = datetime.today
+def today(): return date((t := date.today()).year, t.month, t.day)
 
 def date_from_today(days: int):
-    return date.today() + timedelta(days = days)
+    return today() + timedelta(days = days)
 
 tomorrow = partial(date_from_today, 1)
 yesterday = partial(date_from_today, -1)
 next_week = partial(date_from_today, 7)
 last_week = partial(date_from_today, -7)
-days_ago = lambda days: date.today() - timedelta(days = days)
+days_ago = lambda days: today() - timedelta(days = days)
 
 # For handling web requests
 try:
