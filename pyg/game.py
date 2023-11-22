@@ -8,6 +8,7 @@ from typing_extensions import *
 from ..fp import conditional
 from functools import partial, wraps
 from threading import Thread
+import atexit
 
 class EventDispatcher:
     pass
@@ -37,6 +38,10 @@ class Game:
     def _run(self):
         pygame.init()
         screen = pygame.display.set_mode(self.size)
+        def _atexit():
+            self.quit()
+            pygame.quit()
+        atexit.register(_atexit)
         while not self._quit:
             screen.fill((0, 0, 0))
             if pygame.event.peek(pygame.QUIT):
@@ -57,6 +62,7 @@ class Game:
                     break
                 except: pass
             pygame.display.flip()
+        atexit.unregister(_atexit)
         pygame.quit()
         
     def quit(self, immediate: bool = False):
