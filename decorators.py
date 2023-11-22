@@ -1,8 +1,8 @@
 from typing import *
-from functools import partial, wraps
+from functools import wraps
 import inspect
-from inspect import signature, Parameter as param, Signature
-from .fp import first, replace_decorator
+from inspect import Parameter as param
+from .fp import first
 from .modutil import Includer
 
 __all__ = (include := Includer())
