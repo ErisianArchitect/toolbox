@@ -257,8 +257,8 @@ def instanceof(type: Type):
     return instanceof
 
 @__all__
-def filtertype(_type: Type, seq: Iterable, subtypes: bool = False):
-    pass
+def filtertype(_type: Type, seq: Iterable):
+    yield from (value for value in seq if isinstance(value, _type))
 
 @overload
 def revrange(end: SupportsIndex,/)->range:...
@@ -268,7 +268,7 @@ def revrange(start: SupportsIndex, end: SupportsIndex,/)->range:...
 def revrange(start: SupportsIndex, end: SupportsIndex, step: SupportsIndex,/)->range:...
 @__all__
 def revrange(start: SupportsIndex, end: SupportsIndex = ..., step: SupportsIndex = ...)->range:
-    pass
+    return range(start, end-1, -step)
 
 @__all__
 def yieldinstead(iterable: Iterable[Any], value: Any = None):
@@ -398,34 +398,75 @@ def call_or(maybe_fn, *args, **kwargs):
         return maybe_fn(*args, **kwargs)
     return maybe_fn
 
-@__all__
-def conditional(predicate: Callable[[],bool], takes_args: bool = False):
-    """Creates a function that is only called if a predicate is met."""
-    def decorator(target):
-        @wraps(target)
-        def conditional(*args, **kwargs):
-            if takes_args:
-                active = predicate(*args, **kwargs)
-            else:
-                active = predicate()
-            if active:
-                return target(*args, **kwargs)
-        return conditional
-    return decorator
+R = TypeVar('R')
 
 @__all__
-def replace_decorator(name_or_obj: str | object, name: str = None):
-    match (name_or_obj, name):
-        case (str(name), None):
-            if not name.isidentifier():
-                raise NameError(f'Name was not a valid identifier: {name!r}')
-            def _wrapped(self, target):
-                setattr(self, name, target)
-            _wrapped.__name__ = name
-            return _wrapped
-        case (object(), str(name)):
-            if not name.isidentifier():
-                raise NameError(f'Name was not a valid identifier: {name!r}')
-            return partial(setattr, name_or_obj, name)
+@overload
+def conditional(predicate: Callable[...,bool]):
+    """A decorator for a function that is only callable if predicate is `True`.
+
+    Args:
+        predicate (Callable[...,bool]): The conditional predicate.
+    """
+@overload
+def conditional(predicate: Callable[...,bool], takes_args: bool = True):
+    """A decorator for a function that is only callable if predicate is `True`.
+
+    Args:
+        predicate (Callable[...,bool]): The conditional predicate. (Will take the arguments)
+        takes_args (bool, optional): Determines if the arguments are passed to the predicate. Defaults to True.
+    """
+@overload
+def conditional(predicate: Callable[...,bool], target: Callable[...,R])->Callable[..., R]:
+    """Create a conditional function for the target callable.
+
+    Args:
+        predicate (Callable[...,bool]): The conditional predicate. (Will take the arguments)
+        target (Callable[...,Any]): The target callable.
+    """
+@overload
+def conditional(predicate: Callable[...,bool], target: Callable[...,R], takes_args: bool = True)->Callable[..., R]:...
+def conditional(predicate: Callable[...,bool], first = True, takes_args = True):
+    """Creates a function that is only called if a predicate is met."""
+    match (first, takes_args):
+        case (bool(takes_args), _):
+            def decorator(target):
+                @wraps(target)
+                def conditional(*args, **kwargs):
+                    if takes_args:
+                        active = predicate(*args, **kwargs)
+                    else:
+                        active = predicate()
+                    if active:
+                        return target(*args, **kwargs)
+                return conditional
+            return decorator
+        case (target, bool(takes_args)) if callable(target):
+            @wraps(target)
+            def conditional(*args, **kwargs):
+                if takes_args:
+                    active = predicate(*args, **kwargs)
+                else:
+                    active = predicate()
+                if active:
+                    return target(*args, **kwargs)
+            return conditional
         case _:
-            raise Exception("TODO!")
+            raise ValueError('Invalid arguments.')
+
+# @__all__
+# def replace_decorator(name_or_obj: str | object, name: str = None):
+#     match (name_or_obj, name):
+#         case (str(name), None):
+#             if not name.isidentifier():
+#                 raise NameError(f'Name was not a valid identifier: {name!r}')
+#             def _wrapped(self, target):
+#                 setattr(self, name, target)
+#             _wrapped.__name__ = name
+#             return _wrapped
+#         case (object(), str(name)):
+#             if not name.isidentifier():
+#                 raise NameError(f'Name was not a valid identifier: {name!r}')
+#             return partial(setattr, name_or_obj, name)
+#         case _:
+#             raise Exception("TODO!")
