@@ -80,4 +80,4 @@ branches = ButtonBar()
 
 @branches.branch('Some text.')
 def first_branch(self, button):
-    
+    pass
